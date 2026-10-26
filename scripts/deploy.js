@@ -6,7 +6,13 @@ async function main() {
 
   await contract.waitForDeployment();
 
-  console.log("HelloWorld deployed to:", await contract.getAddress());
+  const address = await contract.getAddress();
+
+  console.log("HelloWorld deployed to:", address);
+  console.log(
+    "Sepolia Etherscan:",
+    `https://sepolia.etherscan.io/address/${address}`
+  );
   console.log("Message:", await contract.message());
 }
 
