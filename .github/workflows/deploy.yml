@@ -1,4 +1,3 @@
-
 name: Deploy to Sepolia
 
 on:
@@ -31,7 +30,24 @@ jobs:
         run: npx hardhat compile
 
       - name: Deploy to Sepolia
-        run: npx hardhat run scripts/deploy.js --network sepolia
+        id: deploy
+        run: |
+          OUTPUT=$(npx hardhat run scripts/deploy.js --network sepolia)
+          echo "$OUTPUT"
+          ADDRESS=$(echo "$OUTPUT" | grep -oE '0x[a-fA-F0-9]{40}' | head -1)
+          if [ -z "$ADDRESS" ]; then
+            echo "Contract address not found"
+            exit 1
+          fi
+          echo "contract_address=$ADDRESS" >> "$GITHUB_OUTPUT"
         env:
           SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
           SEPOLIA_PRIVATE_KEY: ${{ secrets.SEPOLIA_PRIVATE_KEY }}
+
+      - name: Add Etherscan link to workflow summary
+        run: |
+          echo "## Deployment successful" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Contract address: \`${{ steps.deploy.outputs.contract_address }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "[View on Sepolia Etherscan](https://sepolia.etherscan.io/address/${{ steps.deploy.outputs.contract_address }})" >> "$GITHUB_STEP_SUMMARY"
